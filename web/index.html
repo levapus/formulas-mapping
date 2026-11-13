@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Формулы — подбор продуктов</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Подбор продуктов по условиям</h1>
+      <p class="hint">Введите условие и выберите из списка. Колонка «не рекомендуется» имеет приоритет.</p>
+
+      <label class="block">
+        Категория
+        <select id="categoryFilter">
+          <option value="">Все</option>
+        </select>
+      </label>
+
+      <label class="block">
+        Условие
+        <input id="conditionInput" type="search" autocomplete="off" placeholder="Начните вводить…" />
+      </label>
+      <ul id="suggestions" class="suggestions" hidden></ul>
+      <div id="chips" class="chips"></div>
+
+      <p id="status" class="status"></p>
+
+      <section>
+        <h2>Не рекомендуется</h2>
+        <div id="avoidResults"></div>
+      </section>
+      <section>
+        <h2>Рекомендуется</h2>
+        <div id="recommendResults"></div>
+      </section>
+
+      <label class="block">
+        Загрузить data.json
+        <input id="fileInput" type="file" accept="application/json,.json" />
+      </label>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
