@@ -93,7 +93,8 @@ function addCondition(key, display) {
   selected.set(key, display);
   els.input.value = "";
   els.suggestions.hidden = true;
-  render();
+  // Stay closed until the user types or re-focuses the input.
+  render({ showSuggestions: false });
 }
 
 function renderChips() {
@@ -138,9 +139,10 @@ function renderGroups(container, groups) {
   }
 }
 
-function render() {
+function render({ showSuggestions = true } = {}) {
   renderChips();
-  renderSuggestions();
+  if (showSuggestions) renderSuggestions();
+  else els.suggestions.hidden = true;
   if (!selected.size) {
     els.avoid.innerHTML = "";
     els.recommend.innerHTML = "";

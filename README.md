@@ -13,7 +13,7 @@ Offline lookup tool: select astrological / dietary **conditions** (columns 2 and
 |------|-----|
 | Windows + Microsoft Word | **Only** for importing `Formulas.doc` (`pywin32` drives Word via COM) |
 | Python 3.12+ | import, JSON build, pytest |
-| Node.js 18+ | `node --test` (JS lookup tests) |
+| Node.js 18+ | `node --test` (JS lookup tests; root `package.json` sets `"type": "module"` for ESM) |
 | Any modern browser | running the UI |
 
 Without Word you can still build the JSON from the CSV, run the UI and run all tests.

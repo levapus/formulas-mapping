@@ -38,7 +38,6 @@ def split_conditions(text: str) -> list[str]:
     for part in parts:
         piece = part.strip()
         piece = _TRAILING_PUNCT.sub("", piece).strip()
-        # Drop leftover leading "или"/"or" noise only if the whole piece is empty after
         if piece:
             out.append(piece)
     return out
