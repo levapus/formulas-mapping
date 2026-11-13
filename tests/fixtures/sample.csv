@@ -1,0 +1,6 @@
+category,product,polarity,condition,condition_key,canonical_key,source_table,source_row
+Суп,Борщ,avoid,Луна в напряжённом аспекте к Марсу,,,3,2
+Суп,Борщ,recommend,Луна в гармоничном аспекте к Марсу,,,3,2
+Суп,Гороховый,avoid,Луна в напряженном аспекте к Марсу.,,,3,3
+Напиток,Какао,avoid,Дубликат для синонима,,,1,3
+Напиток,Какао,avoid,Alias phrase,,луна в напряженном аспекте к марсу,1,3
