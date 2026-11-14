@@ -39,6 +39,23 @@ input, select {
   font-size: 0.9rem;
 }
 .suggestions li.suggestions-empty:hover { background: transparent; }
+.suggestions li.suggestions-heading {
+  cursor: default;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-top: 1px solid var(--line);
+  background: #faf8f4;
+}
+.suggestions li.suggestions-heading:first-child { border-top: 0; }
+.suggestions li.suggestions-heading:hover { background: #faf8f4; }
+.suggestions li.suggestions-heading-recommend { color: var(--ok); }
+.suggestions li.suggestions-heading-avoid { color: var(--avoid); }
+.suggestions li.suggest-recommend { color: var(--ok); }
+.suggestions li.suggest-avoid { color: var(--avoid); }
+.suggestions li.suggest-recommend:hover { background: #e8f3ec; }
+.suggestions li.suggest-avoid:hover { background: #f5e8e8; }
 .suggestion-pager {
   display: flex;
   align-items: center;

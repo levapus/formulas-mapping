@@ -112,7 +112,7 @@ python -m http.server 8080
 
 Open <http://localhost:8080/web/>. Start the server **from the repository root** (the page loads `../data/data.json`).
 
-Choose a **category** first (or leave «Все»). The condition list is limited to conditions that have products in that category. Type to search (display text and aliases), pick several conditions; the list shows 30 matches per page with **Назад** / **Вперёд**. Changing category drops selected conditions that do not apply there. Products recommended and not recommended are shown separately; avoid takes priority over recommend.
+Choose a **category** first (or leave «Все»). The condition list is limited to conditions that have products in that category, sorted with **recommend (green) first**, then **avoid (red)**; each group is A–Z. Type to search; 30 per page with **Назад** / **Вперёд**. Changing category drops selected conditions that do not apply there. Result products are shown separately; avoid takes priority over recommend.
 
 **Without a server:** double-click `web/index.html`, then click **Загрузить data.json** and choose `data/data.json`. After a successful load the status line shows `Загружено условий: …` and the category list fills in. (Browsers block auto-`fetch` on `file://`, so the manual picker is required.)
 

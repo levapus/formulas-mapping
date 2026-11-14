@@ -74,6 +74,17 @@ function conditionMatchesCategory(cond, categoryFilter) {
   return (cond.mappings || []).some((m) => m.category === categoryFilter);
 }
 
+/** @returns {"recommend"|"avoid"|null} avoid wins if both exist in scope */
+function conditionPolarityForCategory(cond, categoryFilter) {
+  const mappings = (cond.mappings || []).filter(
+    (m) => !categoryFilter || m.category === categoryFilter,
+  );
+  if (!mappings.length) return null;
+  if (mappings.some((m) => m.polarity === "avoid")) return "avoid";
+  if (mappings.some((m) => m.polarity === "recommend")) return "recommend";
+  return null;
+}
+
 function pruneSelectedForCategory() {
   const categoryFilter = els.category.value || null;
   if (!categoryFilter) return;
@@ -89,14 +100,30 @@ function filteredSuggestions(query) {
   const q = normalizeKey(query);
   const categoryFilter = els.category.value || null;
   if (!catalog) return [];
-  return catalog.conditions.filter((c) => {
-    if (selected.has(c.key)) return false;
-    if (!conditionMatchesCategory(c, categoryFilter)) return false;
-    if (!q) return true;
-    if (c.key.includes(q)) return true;
-    if (normalizeKey(c.display).includes(q)) return true;
-    return (c.aliases || []).some((a) => normalizeKey(a).includes(q));
+
+  const matches = [];
+  for (const c of catalog.conditions) {
+    if (selected.has(c.key)) continue;
+    if (!conditionMatchesCategory(c, categoryFilter)) continue;
+    if (q) {
+      const hit =
+        c.key.includes(q) ||
+        normalizeKey(c.display).includes(q) ||
+        (c.aliases || []).some((a) => normalizeKey(a).includes(q));
+      if (!hit) continue;
+    }
+    const polarity = conditionPolarityForCategory(c, categoryFilter);
+    if (!polarity) continue;
+    matches.push({ ...c, listPolarity: polarity });
+  }
+
+  matches.sort((a, b) => {
+    if (a.listPolarity !== b.listPolarity) {
+      return a.listPolarity === "recommend" ? -1 : 1;
+    }
+    return a.display.localeCompare(b.display, "ru");
   });
+  return matches;
 }
 
 function suggestionPageCount() {
@@ -136,10 +163,22 @@ function paintSuggestions() {
 
   const start = suggestionPage * SUGGESTION_PAGE_SIZE;
   const items = suggestionMatches.slice(start, start + SUGGESTION_PAGE_SIZE);
+  let lastPolarity = null;
   for (const c of items) {
+    if (c.listPolarity !== lastPolarity) {
+      lastPolarity = c.listPolarity;
+      const header = document.createElement("li");
+      header.className = `suggestions-heading suggestions-heading-${c.listPolarity}`;
+      header.textContent =
+        c.listPolarity === "recommend" ? "Рекомендуется" : "Не рекомендуется";
+      header.addEventListener("mousedown", (e) => e.preventDefault());
+      els.suggestions.appendChild(header);
+    }
     const li = document.createElement("li");
     li.textContent = c.display;
     li.dataset.key = c.key;
+    li.className =
+      c.listPolarity === "avoid" ? "suggest-avoid" : "suggest-recommend";
     li.addEventListener("mousedown", (e) => {
       e.preventDefault();
       addCondition(c.key, c.display);
