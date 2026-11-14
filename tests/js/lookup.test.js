@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import "../../web/lookup.js";
 
-const { normalizeKey, buildIndex, lookupProducts } = globalThis.FormulasLookup;
+const {
+  normalizeKey,
+  buildIndex,
+  lookupProducts,
+  lookupProductFlags,
+} = globalThis.FormulasLookup;
 
 test("normalizeKey matches Python rules for yo/case/punct", () => {
   assert.equal(normalizeKey("  Уран. "), normalizeKey("уран"));
@@ -60,4 +65,48 @@ test("category filter narrows results only", () => {
   const result = lookupProducts(buildIndex(catalog), ["k1"], "Суп");
   assert.deepEqual(result.avoid, [{ category: "Суп", products: ["Борщ"] }]);
   assert.deepEqual(result.recommend, []);
+});
+
+test("lookupProductFlags keeps both recommend and avoid checks", () => {
+  const catalog = {
+    conditions: [
+      {
+        key: normalizeKey("cond A"),
+        display: "cond A",
+        aliases: [],
+        mappings: [
+          { product: "Борщ", category: "Суп", polarity: "recommend" },
+        ],
+      },
+      {
+        key: normalizeKey("cond B"),
+        display: "cond B",
+        aliases: [],
+        mappings: [
+          { product: "Борщ", category: "Суп", polarity: "avoid" },
+          { product: "Какао", category: "Напиток", polarity: "recommend" },
+        ],
+      },
+    ],
+    categories: ["Напиток", "Суп"],
+  };
+  const rows = lookupProductFlags(
+    buildIndex(catalog),
+    [normalizeKey("cond A"), normalizeKey("cond B")],
+    null,
+  );
+  assert.deepEqual(rows, [
+    {
+      category: "Напиток",
+      product: "Какао",
+      recommend: true,
+      avoid: false,
+    },
+    {
+      category: "Суп",
+      product: "Борщ",
+      recommend: true,
+      avoid: true,
+    },
+  ]);
 });

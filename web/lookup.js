@@ -36,9 +36,9 @@
       }));
   }
 
-  function lookupProducts(index, selectedKeys, categoryFilter) {
-    /** @type {Map<string, "recommend"|"avoid">} */
-    const best = new Map();
+  function lookupProductFlags(index, selectedKeys, categoryFilter) {
+    /** @type {Map<string, {category: string, product: string, recommend: boolean, avoid: boolean}>} */
+    const rows = new Map();
 
     for (const key of selectedKeys) {
       const cond = index.get(key);
@@ -46,21 +46,38 @@
       for (const m of cond.mappings) {
         if (categoryFilter && m.category !== categoryFilter) continue;
         const id = `${m.category}\0${m.product}`;
-        const prev = best.get(id);
-        if (m.polarity === "avoid" || !prev) {
-          best.set(id, m.polarity === "avoid" ? "avoid" : "recommend");
-        } else if (prev === "recommend" && m.polarity === "avoid") {
-          best.set(id, "avoid");
+        let row = rows.get(id);
+        if (!row) {
+          row = {
+            category: m.category,
+            product: m.product,
+            recommend: false,
+            avoid: false,
+          };
+          rows.set(id, row);
         }
-        if (prev === "avoid") best.set(id, "avoid");
+        if (m.polarity === "recommend") row.recommend = true;
+        if (m.polarity === "avoid") row.avoid = true;
       }
     }
 
+    return [...rows.values()].sort((a, b) => {
+      const byCat = a.category.localeCompare(b.category, "ru");
+      if (byCat !== 0) return byCat;
+      return a.product.localeCompare(b.product, "ru");
+    });
+  }
+
+  function lookupProducts(index, selectedKeys, categoryFilter) {
+    const flags = lookupProductFlags(index, selectedKeys, categoryFilter);
     const avoid = [];
     const recommend = [];
-    for (const [id, polarity] of best) {
-      const [category, product] = id.split("\0");
-      (polarity === "avoid" ? avoid : recommend).push({ category, product });
+    for (const row of flags) {
+      // Avoid wins when both are set.
+      if (row.avoid) avoid.push({ category: row.category, product: row.product });
+      else if (row.recommend) {
+        recommend.push({ category: row.category, product: row.product });
+      }
     }
     return {
       avoid: groupByCategory(avoid),
@@ -71,6 +88,7 @@
   global.FormulasLookup = {
     normalizeKey,
     buildIndex,
+    lookupProductFlags,
     lookupProducts,
   };
 })(globalThis);

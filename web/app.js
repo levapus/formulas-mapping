@@ -1,4 +1,4 @@
-const { buildIndex, lookupProducts, normalizeKey } = globalThis.FormulasLookup;
+const { buildIndex, lookupProductFlags, normalizeKey } = globalThis.FormulasLookup;
 
 const els = {
   input: document.getElementById("conditionInput"),
@@ -11,8 +11,9 @@ const els = {
   chips: document.getElementById("chips"),
   category: document.getElementById("categoryFilter"),
   status: document.getElementById("status"),
-  avoid: document.getElementById("avoidResults"),
-  recommend: document.getElementById("recommendResults"),
+  resultsBody: document.getElementById("resultsBody"),
+  resultsEmpty: document.getElementById("resultsEmpty"),
+  resultsTable: document.getElementById("resultsTable"),
   file: document.getElementById("fileInput"),
 };
 
@@ -239,26 +240,53 @@ function renderChips() {
   }
 }
 
-function renderGroups(container, groups) {
-  container.innerHTML = "";
-  if (!groups.length) {
-    container.textContent = "—";
+function checkCell(checked, tone) {
+  const td = document.createElement("td");
+  td.className = `check-cell check-${tone}`;
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.disabled = true;
+  input.checked = checked;
+  input.tabIndex = -1;
+  td.appendChild(input);
+  return td;
+}
+
+function renderResultsTable(rows) {
+  els.resultsBody.innerHTML = "";
+  if (!rows.length) {
+    els.resultsTable.hidden = true;
+    els.resultsEmpty.hidden = false;
+    els.resultsEmpty.textContent = selected.size
+      ? "Нет продуктов для выбранных условий"
+      : "Выберите условия, чтобы увидеть продукты";
     return;
   }
-  for (const g of groups) {
-    const div = document.createElement("div");
-    div.className = "group";
-    const h = document.createElement("h3");
-    h.textContent = g.category;
-    const ul = document.createElement("ul");
-    for (const p of g.products) {
-      const li = document.createElement("li");
-      li.textContent = p;
-      ul.appendChild(li);
+  els.resultsTable.hidden = false;
+  els.resultsEmpty.hidden = true;
+
+  let lastCategory = null;
+  for (const row of rows) {
+    if (row.category !== lastCategory) {
+      lastCategory = row.category;
+      const groupRow = document.createElement("tr");
+      groupRow.className = "category-row";
+      const th = document.createElement("td");
+      th.colSpan = 3;
+      th.textContent = row.category;
+      groupRow.appendChild(th);
+      els.resultsBody.appendChild(groupRow);
     }
-    div.appendChild(h);
-    div.appendChild(ul);
-    container.appendChild(div);
+    const tr = document.createElement("tr");
+    if (row.avoid) tr.classList.add("row-avoid");
+    else if (row.recommend) tr.classList.add("row-recommend");
+    const name = document.createElement("td");
+    name.className = "product-cell";
+    name.textContent = row.product;
+    tr.appendChild(name);
+    tr.appendChild(checkCell(row.recommend, "recommend"));
+    tr.appendChild(checkCell(row.avoid, "avoid"));
+    els.resultsBody.appendChild(tr);
   }
 }
 
@@ -268,19 +296,17 @@ function render({ showSuggestions = true } = {}) {
   if (showSuggestions) renderSuggestions();
   else hideSuggestionPanel();
   if (!selected.size) {
-    els.avoid.innerHTML = "";
-    els.recommend.innerHTML = "";
+    renderResultsTable([]);
     if (catalog) setStatus("Выберите одно или несколько условий");
     return;
   }
   const filter = els.category.value || null;
-  const result = lookupProducts(index, [...selected.keys()], filter);
-  renderGroups(els.avoid, result.avoid);
-  renderGroups(els.recommend, result.recommend);
-  if (!result.avoid.length && !result.recommend.length) {
+  const rows = lookupProductFlags(index, [...selected.keys()], filter);
+  renderResultsTable(rows);
+  if (!rows.length) {
     setStatus("Нет продуктов для выбранных условий");
   } else {
-    setStatus(`Выбрано условий: ${selected.size}`);
+    setStatus(`Выбрано условий: ${selected.size} · продуктов: ${rows.length}`);
   }
 }
 

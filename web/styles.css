@@ -112,9 +112,49 @@ select { margin-top: 0.35rem; }
   padding: 0.25rem 0.6rem; display: inline-flex; gap: 0.35rem; align-items: center;
 }
 .chip button { border: 0; background: transparent; cursor: pointer; }
-.group { margin: 0.5rem 0 1rem; }
-.group h3 { margin: 0 0 0.35rem; font-size: 1rem; }
-.group li { white-space: pre-line; }
-#avoidResults h3 { color: var(--avoid); }
-#recommendResults h3 { color: var(--ok); }
+.results-section { margin-top: 1rem; }
+.results-section h2 { margin: 0 0 0.6rem; font-size: 1.15rem; }
+.results-table-wrap { overflow-x: auto; }
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.results-table th,
+.results-table td {
+  padding: 0.45rem 0.65rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+}
+.results-table th {
+  background: #faf8f4;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.results-table th:nth-child(2),
+.results-table th:nth-child(3),
+.results-table td.check-cell {
+  text-align: center;
+  width: 8.5rem;
+}
+.results-table tr.category-row td {
+  background: #f0ebe3;
+  font-weight: 600;
+  white-space: pre-line;
+}
+.results-table tr.row-recommend .product-cell { color: var(--ok); }
+.results-table tr.row-avoid .product-cell { color: var(--avoid); }
+.results-table .product-cell { white-space: pre-line; }
+.results-table input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: currentColor;
+  pointer-events: none;
+}
+.results-table .check-recommend { color: var(--ok); }
+.results-table .check-avoid { color: var(--avoid); }
+.results-empty { color: var(--muted); margin: 0.5rem 0 0; }
 .error { color: var(--avoid); }

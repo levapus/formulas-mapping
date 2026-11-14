@@ -9,7 +9,7 @@
   <body>
     <main>
       <h1>Подбор продуктов по условиям</h1>
-      <p class="hint">Введите условие и выберите из списка. Колонка «не рекомендуется» имеет приоритет.</p>
+      <p class="hint">Выберите условия — ниже таблица продуктов по категориям. Галочки: рекомендуется / не рекомендуется (оба могут быть отмечены).</p>
 
       <label class="block">
         Категория
@@ -39,13 +39,21 @@
 
       <p id="status" class="status"></p>
 
-      <section>
-        <h2>Не рекомендуется</h2>
-        <div id="avoidResults"></div>
-      </section>
-      <section>
-        <h2>Рекомендуется</h2>
-        <div id="recommendResults"></div>
+      <section class="results-section">
+        <h2>Результаты</h2>
+        <div class="results-table-wrap">
+          <table id="resultsTable" class="results-table">
+            <thead>
+              <tr>
+                <th>Категория / продукт</th>
+                <th>Рекомендуется</th>
+                <th>Не рекомендуется</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+        <p id="resultsEmpty" class="results-empty" hidden>Выберите условия, чтобы увидеть продукты</p>
       </section>
 
       <label class="block">
