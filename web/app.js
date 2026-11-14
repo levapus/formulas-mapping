@@ -141,8 +141,10 @@ function addCondition(key, display) {
   selected.set(key, display);
   els.input.value = "";
   hideSuggestionPanel();
-  // Stay closed until the user types or re-focuses the input.
+  // Stay closed until the user clicks/focuses the input again.
   render({ showSuggestions: false });
+  // Blur so the next click fires focus/click and reopens the list.
+  els.input.blur();
 }
 
 function renderChips() {
@@ -210,12 +212,16 @@ function render({ showSuggestions = true } = {}) {
 
 els.input.addEventListener("input", renderSuggestions);
 els.input.addEventListener("focus", renderSuggestions);
+// Re-open when already focused (focus alone does not fire a second time).
+els.input.addEventListener("click", () => {
+  if (els.suggestionPanel.hidden) renderSuggestions();
+});
 els.input.addEventListener("blur", () => {
   // Delay so Prev/Next mousedown can run before blur hides the panel.
   setTimeout(() => {
-    if (!els.suggestionPanel.contains(document.activeElement)) {
-      hideSuggestionPanel();
-    }
+    if (document.activeElement === els.input) return;
+    if (els.suggestionPanel.contains(document.activeElement)) return;
+    hideSuggestionPanel();
   }, 0);
 });
 els.input.addEventListener("keydown", (e) => {
