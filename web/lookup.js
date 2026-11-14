@@ -36,9 +36,32 @@
       }));
   }
 
-  function lookupProductFlags(index, selectedKeys, categoryFilter) {
-    /** @type {Map<string, {category: string, product: string, recommend: boolean, avoid: boolean}>} */
-    const rows = new Map();
+  function listAllProducts(catalog) {
+    /** @type {Map<string, {category: string, product: string}>} */
+    const map = new Map();
+    for (const cond of catalog.conditions || []) {
+      for (const m of cond.mappings || []) {
+        if (!m.category || !m.product) continue;
+        const id = `${m.category}\0${m.product}`;
+        if (!map.has(id)) {
+          map.set(id, { category: m.category, product: m.product });
+        }
+      }
+    }
+    return [...map.values()].sort((a, b) => {
+      const byCat = a.category.localeCompare(b.category, "ru");
+      if (byCat !== 0) return byCat;
+      return a.product.localeCompare(b.product, "ru");
+    });
+  }
+
+  /**
+   * Full product catalog with recommend/avoid/neutral flags from selected conditions.
+   * Neutral = neither recommend nor avoid for the current selection.
+   */
+  function lookupProductFlags(allProducts, index, selectedKeys, categoryFilter) {
+    /** @type {Map<string, {recommend: boolean, avoid: boolean}>} */
+    const flagged = new Map();
 
     for (const key of selectedKeys) {
       const cond = index.get(key);
@@ -46,30 +69,56 @@
       for (const m of cond.mappings) {
         if (categoryFilter && m.category !== categoryFilter) continue;
         const id = `${m.category}\0${m.product}`;
-        let row = rows.get(id);
-        if (!row) {
-          row = {
-            category: m.category,
-            product: m.product,
-            recommend: false,
-            avoid: false,
-          };
-          rows.set(id, row);
+        let flags = flagged.get(id);
+        if (!flags) {
+          flags = { recommend: false, avoid: false };
+          flagged.set(id, flags);
         }
-        if (m.polarity === "recommend") row.recommend = true;
-        if (m.polarity === "avoid") row.avoid = true;
+        if (m.polarity === "recommend") flags.recommend = true;
+        if (m.polarity === "avoid") flags.avoid = true;
       }
     }
 
-    return [...rows.values()].sort((a, b) => {
-      const byCat = a.category.localeCompare(b.category, "ru");
-      if (byCat !== 0) return byCat;
-      return a.product.localeCompare(b.product, "ru");
-    });
+    const rows = [];
+    for (const p of allProducts) {
+      if (categoryFilter && p.category !== categoryFilter) continue;
+      const id = `${p.category}\0${p.product}`;
+      const flags = flagged.get(id);
+      const recommend = Boolean(flags?.recommend);
+      const avoid = Boolean(flags?.avoid);
+      rows.push({
+        category: p.category,
+        product: p.product,
+        recommend,
+        avoid,
+        neutral: !recommend && !avoid,
+      });
+    }
+    return rows;
   }
 
   function lookupProducts(index, selectedKeys, categoryFilter) {
-    const flags = lookupProductFlags(index, selectedKeys, categoryFilter);
+    // Build a temporary product list from the flagged hits only (legacy API).
+    const flaggedOnly = [];
+    const seen = new Map();
+    for (const key of selectedKeys) {
+      const cond = index.get(key);
+      if (!cond) continue;
+      for (const m of cond.mappings) {
+        if (categoryFilter && m.category !== categoryFilter) continue;
+        const id = `${m.category}\0${m.product}`;
+        if (!seen.has(id)) {
+          seen.set(id, { category: m.category, product: m.product });
+          flaggedOnly.push(seen.get(id));
+        }
+      }
+    }
+    const flags = lookupProductFlags(
+      flaggedOnly,
+      index,
+      selectedKeys,
+      categoryFilter,
+    );
     const avoid = [];
     const recommend = [];
     for (const row of flags) {
@@ -88,6 +137,7 @@
   global.FormulasLookup = {
     normalizeKey,
     buildIndex,
+    listAllProducts,
     lookupProductFlags,
     lookupProducts,
   };

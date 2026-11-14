@@ -5,6 +5,7 @@ import "../../web/lookup.js";
 const {
   normalizeKey,
   buildIndex,
+  listAllProducts,
   lookupProducts,
   lookupProductFlags,
 } = globalThis.FormulasLookup;
@@ -67,7 +68,29 @@ test("category filter narrows results only", () => {
   assert.deepEqual(result.recommend, []);
 });
 
-test("lookupProductFlags keeps both recommend and avoid checks", () => {
+test("listAllProducts returns every unique category+product", () => {
+  const catalog = {
+    conditions: [
+      {
+        key: "a",
+        display: "a",
+        aliases: [],
+        mappings: [
+          { product: "Борщ", category: "Суп", polarity: "recommend" },
+          { product: "Борщ", category: "Суп", polarity: "avoid" },
+          { product: "Какао", category: "Напиток", polarity: "recommend" },
+        ],
+      },
+    ],
+    categories: ["Напиток", "Суп"],
+  };
+  assert.deepEqual(listAllProducts(catalog), [
+    { category: "Напиток", product: "Какао" },
+    { category: "Суп", product: "Борщ" },
+  ]);
+});
+
+test("lookupProductFlags marks hits on full catalog; others unchecked", () => {
   const catalog = {
     conditions: [
       {
@@ -87,10 +110,20 @@ test("lookupProductFlags keeps both recommend and avoid checks", () => {
           { product: "Какао", category: "Напиток", polarity: "recommend" },
         ],
       },
+      {
+        key: "unused",
+        display: "unused",
+        aliases: [],
+        mappings: [
+          { product: "Хрен", category: "Овощ", polarity: "avoid" },
+        ],
+      },
     ],
-    categories: ["Напиток", "Суп"],
+    categories: ["Напиток", "Овощ", "Суп"],
   };
+  const all = listAllProducts(catalog);
   const rows = lookupProductFlags(
+    all,
     buildIndex(catalog),
     [normalizeKey("cond A"), normalizeKey("cond B")],
     null,
@@ -101,12 +134,21 @@ test("lookupProductFlags keeps both recommend and avoid checks", () => {
       product: "Какао",
       recommend: true,
       avoid: false,
+      neutral: false,
+    },
+    {
+      category: "Овощ",
+      product: "Хрен",
+      recommend: false,
+      avoid: false,
+      neutral: true,
     },
     {
       category: "Суп",
       product: "Борщ",
       recommend: true,
       avoid: true,
+      neutral: false,
     },
   ]);
 });

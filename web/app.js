@@ -1,4 +1,9 @@
-const { buildIndex, lookupProductFlags, normalizeKey } = globalThis.FormulasLookup;
+const {
+  buildIndex,
+  listAllProducts,
+  lookupProductFlags,
+  normalizeKey,
+} = globalThis.FormulasLookup;
 
 const els = {
   input: document.getElementById("conditionInput"),
@@ -23,6 +28,8 @@ const SUGGESTION_PAGE_SIZE = 30;
 let catalog = null;
 /** @type {Map<string, any>} */
 let index = new Map();
+/** @type {{category: string, product: string}[]} */
+let allProducts = [];
 /** @type {Map<string, string>} key -> display */
 const selected = new Map();
 /** @type {any[]} */
@@ -59,6 +66,7 @@ function applyCatalog(data) {
   }
   catalog = data;
   index = buildIndex(catalog);
+  allProducts = listAllProducts(catalog);
   selected.clear();
   els.category.innerHTML = `<option value="">Все</option>`;
   for (const c of catalog.categories || []) {
@@ -68,7 +76,9 @@ function applyCatalog(data) {
     els.category.appendChild(opt);
   }
   render();
-  setStatus(`Загружено условий: ${catalog.conditions.length}`);
+  setStatus(
+    `Загружено: ${catalog.conditions.length} условий, ${allProducts.length} продуктов`,
+  );
 }
 
 function conditionMatchesCategory(cond, categoryFilter) {
@@ -257,9 +267,9 @@ function renderResultsTable(rows) {
   if (!rows.length) {
     els.resultsTable.hidden = true;
     els.resultsEmpty.hidden = false;
-    els.resultsEmpty.textContent = selected.size
-      ? "Нет продуктов для выбранных условий"
-      : "Выберите условия, чтобы увидеть продукты";
+    els.resultsEmpty.textContent = catalog
+      ? "Нет продуктов в выбранной категории"
+      : "Загрузите data.json";
     return;
   }
   els.resultsTable.hidden = false;
@@ -272,7 +282,7 @@ function renderResultsTable(rows) {
       const groupRow = document.createElement("tr");
       groupRow.className = "category-row";
       const th = document.createElement("td");
-      th.colSpan = 3;
+      th.colSpan = 4;
       th.textContent = row.category;
       groupRow.appendChild(th);
       els.resultsBody.appendChild(groupRow);
@@ -280,12 +290,14 @@ function renderResultsTable(rows) {
     const tr = document.createElement("tr");
     if (row.avoid) tr.classList.add("row-avoid");
     else if (row.recommend) tr.classList.add("row-recommend");
+    else tr.classList.add("row-neutral");
     const name = document.createElement("td");
     name.className = "product-cell";
     name.textContent = row.product;
     tr.appendChild(name);
     tr.appendChild(checkCell(row.recommend, "recommend"));
     tr.appendChild(checkCell(row.avoid, "avoid"));
+    tr.appendChild(checkCell(row.neutral, "neutral"));
     els.resultsBody.appendChild(tr);
   }
 }
@@ -295,18 +307,28 @@ function render({ showSuggestions = true } = {}) {
   renderChips();
   if (showSuggestions) renderSuggestions();
   else hideSuggestionPanel();
-  if (!selected.size) {
-    renderResultsTable([]);
-    if (catalog) setStatus("Выберите одно или несколько условий");
-    return;
-  }
+
   const filter = els.category.value || null;
-  const rows = lookupProductFlags(index, [...selected.keys()], filter);
+  const rows = lookupProductFlags(
+    allProducts,
+    index,
+    [...selected.keys()],
+    filter,
+  );
   renderResultsTable(rows);
-  if (!rows.length) {
-    setStatus("Нет продуктов для выбранных условий");
+
+  if (!catalog) return;
+  const recommended = rows.filter((r) => r.recommend).length;
+  const avoided = rows.filter((r) => r.avoid).length;
+  const neutral = rows.filter((r) => r.neutral).length;
+  if (!selected.size) {
+    setStatus(
+      `Все продукты (${rows.length}), все нейтральны. Выберите условия.`,
+    );
   } else {
-    setStatus(`Выбрано условий: ${selected.size} · продуктов: ${rows.length}`);
+    setStatus(
+      `Условий: ${selected.size} · продуктов: ${rows.length} · рек.: ${recommended} · избегать: ${avoided} · нейтр.: ${neutral}`,
+    );
   }
 }
 

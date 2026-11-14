@@ -112,7 +112,7 @@ python -m http.server 8080
 
 Open <http://localhost:8080/web/>. Start the server **from the repository root** (the page loads `../data/data.json`).
 
-Choose a **category** first (or leave «Все»). The condition list is limited to conditions that have products in that category, sorted with **recommend (green) first**, then **avoid (red)**; each group is A–Z. Type to search, or use the **🎤 mic** button (Chrome) to speak a substring (e.g. «Луна») — same filter as typing. 30 per page with **Назад** / **Вперёд**. Changing category drops selected conditions that do not apply there. Results are a **table** (category groups → product → checkboxes for recommend / avoid); both boxes can be checked when selected conditions hit both polarities.
+Choose a **category** first (or leave «Все»). The condition list is limited to conditions that have products in that category, sorted with **recommend (green) first**, then **avoid (red)**; each group is A–Z. Type to search, or use the **🎤 mic** button (Chrome) to speak a substring (e.g. «Луна») — same filter as typing. 30 per page with **Назад** / **Вперёд**. Changing category drops selected conditions that do not apply there. Results are a **full product table** (all categories/products, optionally filtered by category). Selected conditions set **recommend** / **avoid** checkboxes; products with neither hit are marked **Нейтрально**.
 
 **Without a server:** double-click `web/index.html`, then click **Загрузить data.json** and choose `data/data.json`. After a successful load the status line shows `Загружено условий: …` and the category list fills in. (Browsers block auto-`fetch` on `file://`, so the manual picker is required.)
 

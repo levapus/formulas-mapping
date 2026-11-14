@@ -136,6 +136,7 @@ select { margin-top: 0.35rem; }
 }
 .results-table th:nth-child(2),
 .results-table th:nth-child(3),
+.results-table th:nth-child(4),
 .results-table td.check-cell {
   text-align: center;
   width: 10.5rem;
@@ -148,6 +149,7 @@ select { margin-top: 0.35rem; }
 }
 .results-table tr.row-recommend .product-cell { color: var(--ok); }
 .results-table tr.row-avoid .product-cell { color: var(--avoid); }
+.results-table tr.row-neutral .product-cell { color: var(--muted); }
 .results-table .product-cell { white-space: pre-line; }
 .results-table input[type="checkbox"] {
   width: 1.05rem;
@@ -157,5 +159,6 @@ select { margin-top: 0.35rem; }
 }
 .results-table .check-recommend { color: var(--ok); }
 .results-table .check-avoid { color: var(--avoid); }
+.results-table .check-neutral { color: var(--muted); }
 .results-empty { color: var(--muted); margin: 0.5rem 0 0; }
 .error { color: var(--avoid); }
