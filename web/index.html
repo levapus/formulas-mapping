@@ -22,7 +22,14 @@
         Условие
         <input id="conditionInput" type="search" autocomplete="off" placeholder="Начните вводить…" />
       </label>
-      <ul id="suggestions" class="suggestions" hidden></ul>
+      <div id="suggestionPanel" class="suggestion-panel" hidden>
+        <ul id="suggestions" class="suggestions"></ul>
+        <div class="suggestion-pager">
+          <button type="button" id="suggestionPrev">Назад</button>
+          <span id="suggestionPageInfo" class="suggestion-page-info"></span>
+          <button type="button" id="suggestionNext">Вперёд</button>
+        </div>
+      </div>
       <div id="chips" class="chips"></div>
 
       <p id="status" class="status"></p>

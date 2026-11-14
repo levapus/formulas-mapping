@@ -2,7 +2,11 @@ const { buildIndex, lookupProducts, normalizeKey } = globalThis.FormulasLookup;
 
 const els = {
   input: document.getElementById("conditionInput"),
+  suggestionPanel: document.getElementById("suggestionPanel"),
   suggestions: document.getElementById("suggestions"),
+  suggestionPrev: document.getElementById("suggestionPrev"),
+  suggestionNext: document.getElementById("suggestionNext"),
+  suggestionPageInfo: document.getElementById("suggestionPageInfo"),
   chips: document.getElementById("chips"),
   category: document.getElementById("categoryFilter"),
   status: document.getElementById("status"),
@@ -21,11 +25,16 @@ let index = new Map();
 const selected = new Map();
 /** @type {any[]} */
 let suggestionMatches = [];
-let suggestionLimit = SUGGESTION_PAGE_SIZE;
+/** 0-based page index */
+let suggestionPage = 0;
 
 function setStatus(msg, isError = false) {
   els.status.textContent = msg;
   els.status.classList.toggle("error", isError);
+}
+
+function hideSuggestionPanel() {
+  els.suggestionPanel.hidden = true;
 }
 
 async function loadDefault() {
@@ -72,20 +81,28 @@ function filteredSuggestions(query) {
   });
 }
 
-function resetSuggestionPaging() {
-  suggestionMatches = filteredSuggestions(els.input.value);
-  suggestionLimit = SUGGESTION_PAGE_SIZE;
+function suggestionPageCount() {
+  if (!suggestionMatches.length) return 0;
+  return Math.ceil(suggestionMatches.length / SUGGESTION_PAGE_SIZE);
 }
 
-function paintSuggestions({ preserveScroll = false } = {}) {
-  const scrollTop = els.suggestions.scrollTop;
+function resetSuggestionPaging() {
+  suggestionMatches = filteredSuggestions(els.input.value);
+  suggestionPage = 0;
+}
+
+function paintSuggestions() {
   els.suggestions.innerHTML = "";
   if (!suggestionMatches.length || document.activeElement !== els.input) {
-    els.suggestions.hidden = true;
+    hideSuggestionPanel();
     return;
   }
 
-  const items = suggestionMatches.slice(0, suggestionLimit);
+  const totalPages = suggestionPageCount();
+  if (suggestionPage >= totalPages) suggestionPage = Math.max(0, totalPages - 1);
+
+  const start = suggestionPage * SUGGESTION_PAGE_SIZE;
+  const items = suggestionMatches.slice(start, start + SUGGESTION_PAGE_SIZE);
   for (const c of items) {
     const li = document.createElement("li");
     li.textContent = c.display;
@@ -97,16 +114,14 @@ function paintSuggestions({ preserveScroll = false } = {}) {
     els.suggestions.appendChild(li);
   }
 
-  if (suggestionLimit < suggestionMatches.length) {
-    const more = document.createElement("li");
-    more.className = "suggestions-more";
-    more.textContent = `Показано ${items.length} из ${suggestionMatches.length} — прокрутите вниз`;
-    more.addEventListener("mousedown", (e) => e.preventDefault());
-    els.suggestions.appendChild(more);
-  }
+  const from = start + 1;
+  const to = start + items.length;
+  els.suggestionPageInfo.textContent = `${from}–${to} из ${suggestionMatches.length} · стр. ${suggestionPage + 1}/${totalPages}`;
+  els.suggestionPrev.disabled = suggestionPage <= 0;
+  els.suggestionNext.disabled = suggestionPage >= totalPages - 1;
 
-  els.suggestions.hidden = false;
-  if (preserveScroll) els.suggestions.scrollTop = scrollTop;
+  els.suggestionPanel.hidden = false;
+  els.suggestions.scrollTop = 0;
 }
 
 function renderSuggestions() {
@@ -114,19 +129,18 @@ function renderSuggestions() {
   paintSuggestions();
 }
 
-function loadMoreSuggestions() {
-  if (suggestionLimit >= suggestionMatches.length) return;
-  suggestionLimit = Math.min(
-    suggestionLimit + SUGGESTION_PAGE_SIZE,
-    suggestionMatches.length,
-  );
-  paintSuggestions({ preserveScroll: true });
+function goSuggestionPage(delta) {
+  const totalPages = suggestionPageCount();
+  if (!totalPages) return;
+  suggestionPage = Math.min(Math.max(0, suggestionPage + delta), totalPages - 1);
+  paintSuggestions();
+  els.input.focus();
 }
 
 function addCondition(key, display) {
   selected.set(key, display);
   els.input.value = "";
-  els.suggestions.hidden = true;
+  hideSuggestionPanel();
   // Stay closed until the user types or re-focuses the input.
   render({ showSuggestions: false });
 }
@@ -176,7 +190,7 @@ function renderGroups(container, groups) {
 function render({ showSuggestions = true } = {}) {
   renderChips();
   if (showSuggestions) renderSuggestions();
-  else els.suggestions.hidden = true;
+  else hideSuggestionPanel();
   if (!selected.size) {
     els.avoid.innerHTML = "";
     els.recommend.innerHTML = "";
@@ -197,7 +211,12 @@ function render({ showSuggestions = true } = {}) {
 els.input.addEventListener("input", renderSuggestions);
 els.input.addEventListener("focus", renderSuggestions);
 els.input.addEventListener("blur", () => {
-  els.suggestions.hidden = true;
+  // Delay so Prev/Next mousedown can run before blur hides the panel.
+  setTimeout(() => {
+    if (!els.suggestionPanel.contains(document.activeElement)) {
+      hideSuggestionPanel();
+    }
+  }, 0);
 });
 els.input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
@@ -205,14 +224,20 @@ els.input.addEventListener("keydown", (e) => {
     const first = els.suggestions.querySelector("li[data-key]");
     if (first) addCondition(first.dataset.key, first.textContent);
   }
-  if (e.key === "Escape") els.suggestions.hidden = true;
-});
-els.suggestions.addEventListener("scroll", () => {
-  const el = els.suggestions;
-  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 32) {
-    loadMoreSuggestions();
+  if (e.key === "Escape") hideSuggestionPanel();
+  if (e.key === "ArrowLeft" && e.altKey) {
+    e.preventDefault();
+    goSuggestionPage(-1);
+  }
+  if (e.key === "ArrowRight" && e.altKey) {
+    e.preventDefault();
+    goSuggestionPage(1);
   }
 });
+els.suggestionPrev.addEventListener("mousedown", (e) => e.preventDefault());
+els.suggestionNext.addEventListener("mousedown", (e) => e.preventDefault());
+els.suggestionPrev.addEventListener("click", () => goSuggestionPage(-1));
+els.suggestionNext.addEventListener("click", () => goSuggestionPage(1));
 els.category.addEventListener("change", render);
 els.file.addEventListener("change", async () => {
   const file = els.file.files?.[0];
