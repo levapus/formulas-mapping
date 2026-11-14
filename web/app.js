@@ -11,12 +11,17 @@ const els = {
   file: document.getElementById("fileInput"),
 };
 
+const SUGGESTION_PAGE_SIZE = 30;
+
 /** @type {any} */
 let catalog = null;
 /** @type {Map<string, any>} */
 let index = new Map();
 /** @type {Map<string, string>} key -> display */
 const selected = new Map();
+/** @type {any[]} */
+let suggestionMatches = [];
+let suggestionLimit = SUGGESTION_PAGE_SIZE;
 
 function setStatus(msg, isError = false) {
   els.status.textContent = msg;
@@ -58,24 +63,29 @@ function applyCatalog(data) {
 function filteredSuggestions(query) {
   const q = normalizeKey(query);
   if (!catalog) return [];
-  return catalog.conditions
-    .filter((c) => {
-      if (selected.has(c.key)) return false;
-      if (!q) return true;
-      if (c.key.includes(q)) return true;
-      if (normalizeKey(c.display).includes(q)) return true;
-      return (c.aliases || []).some((a) => normalizeKey(a).includes(q));
-    })
-    .slice(0, 30);
+  return catalog.conditions.filter((c) => {
+    if (selected.has(c.key)) return false;
+    if (!q) return true;
+    if (c.key.includes(q)) return true;
+    if (normalizeKey(c.display).includes(q)) return true;
+    return (c.aliases || []).some((a) => normalizeKey(a).includes(q));
+  });
 }
 
-function renderSuggestions() {
-  const items = filteredSuggestions(els.input.value);
+function resetSuggestionPaging() {
+  suggestionMatches = filteredSuggestions(els.input.value);
+  suggestionLimit = SUGGESTION_PAGE_SIZE;
+}
+
+function paintSuggestions({ preserveScroll = false } = {}) {
+  const scrollTop = els.suggestions.scrollTop;
   els.suggestions.innerHTML = "";
-  if (!items.length || document.activeElement !== els.input) {
+  if (!suggestionMatches.length || document.activeElement !== els.input) {
     els.suggestions.hidden = true;
     return;
   }
+
+  const items = suggestionMatches.slice(0, suggestionLimit);
   for (const c of items) {
     const li = document.createElement("li");
     li.textContent = c.display;
@@ -86,7 +96,31 @@ function renderSuggestions() {
     });
     els.suggestions.appendChild(li);
   }
+
+  if (suggestionLimit < suggestionMatches.length) {
+    const more = document.createElement("li");
+    more.className = "suggestions-more";
+    more.textContent = `Показано ${items.length} из ${suggestionMatches.length} — прокрутите вниз`;
+    more.addEventListener("mousedown", (e) => e.preventDefault());
+    els.suggestions.appendChild(more);
+  }
+
   els.suggestions.hidden = false;
+  if (preserveScroll) els.suggestions.scrollTop = scrollTop;
+}
+
+function renderSuggestions() {
+  resetSuggestionPaging();
+  paintSuggestions();
+}
+
+function loadMoreSuggestions() {
+  if (suggestionLimit >= suggestionMatches.length) return;
+  suggestionLimit = Math.min(
+    suggestionLimit + SUGGESTION_PAGE_SIZE,
+    suggestionMatches.length,
+  );
+  paintSuggestions({ preserveScroll: true });
 }
 
 function addCondition(key, display) {
@@ -168,10 +202,16 @@ els.input.addEventListener("blur", () => {
 els.input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
-    const first = els.suggestions.querySelector("li");
+    const first = els.suggestions.querySelector("li[data-key]");
     if (first) addCondition(first.dataset.key, first.textContent);
   }
   if (e.key === "Escape") els.suggestions.hidden = true;
+});
+els.suggestions.addEventListener("scroll", () => {
+  const el = els.suggestions;
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 32) {
+    loadMoreSuggestions();
+  }
 });
 els.category.addEventListener("change", render);
 els.file.addEventListener("change", async () => {
