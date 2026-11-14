@@ -18,10 +18,15 @@
         </select>
       </label>
 
-      <label class="block">
-        Условие
-        <input id="conditionInput" type="search" autocomplete="off" placeholder="Начните вводить…" />
-      </label>
+      <div class="block">
+        <span class="field-label">Условие</span>
+        <div class="condition-row">
+          <input id="conditionInput" type="search" autocomplete="off" placeholder="Начните вводить…" />
+          <button type="button" id="micButton" class="mic-button" title="Голосовой ввод (например: Луна)" aria-label="Голосовой ввод">
+            🎤
+          </button>
+        </div>
+      </div>
       <div id="suggestionPanel" class="suggestion-panel" hidden>
         <ul id="suggestions" class="suggestions"></ul>
         <div class="suggestion-pager">

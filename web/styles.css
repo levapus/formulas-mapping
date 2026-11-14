@@ -16,9 +16,34 @@ body {
 main { max-width: 52rem; margin: 0 auto; padding: 1.5rem; }
 .hint, .status { color: var(--muted); }
 .block { display: block; margin: 0.75rem 0; }
+.field-label { display: block; margin-bottom: 0.35rem; }
 input, select {
-  display: block; width: 100%; margin-top: 0.35rem;
+  display: block; width: 100%;
   padding: 0.55rem 0.65rem; border: 1px solid var(--line); border-radius: 6px;
+}
+select { margin-top: 0.35rem; }
+.condition-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: stretch;
+}
+.condition-row input { flex: 1; min-width: 0; }
+.mic-button {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+.mic-button:hover:not(:disabled) { background: #f0ebe3; }
+.mic-button:disabled { opacity: 0.45; cursor: default; }
+.mic-button.listening {
+  background: #f5e8e8;
+  border-color: var(--avoid);
+  box-shadow: 0 0 0 2px rgba(122, 31, 31, 0.15);
 }
 .suggestion-panel {
   border: 1px solid var(--line);

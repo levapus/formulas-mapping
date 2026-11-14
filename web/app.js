@@ -2,6 +2,7 @@ const { buildIndex, lookupProducts, normalizeKey } = globalThis.FormulasLookup;
 
 const els = {
   input: document.getElementById("conditionInput"),
+  mic: document.getElementById("micButton"),
   suggestionPanel: document.getElementById("suggestionPanel"),
   suggestions: document.getElementById("suggestions"),
   suggestionPrev: document.getElementById("suggestionPrev"),
@@ -282,6 +283,70 @@ function render({ showSuggestions = true } = {}) {
     setStatus(`Выбрано условий: ${selected.size}`);
   }
 }
+
+function applySpokenQuery(text) {
+  els.input.value = (text || "").trim();
+  els.input.focus();
+  renderSuggestions();
+}
+
+function setMicListening(on) {
+  els.mic.classList.toggle("listening", on);
+  els.mic.setAttribute("aria-pressed", on ? "true" : "false");
+  els.mic.title = on
+    ? "Слушаю… нажмите ещё раз, чтобы остановить"
+    : "Голосовой ввод (например: Луна)";
+}
+
+const SpeechRecognitionCtor =
+  globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition;
+/** @type {InstanceType<typeof SpeechRecognition>|null} */
+let recognition = null;
+if (SpeechRecognitionCtor) {
+  recognition = new SpeechRecognitionCtor();
+  recognition.lang = "ru-RU";
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 1;
+  recognition.addEventListener("start", () => setMicListening(true));
+  recognition.addEventListener("end", () => setMicListening(false));
+  recognition.addEventListener("error", (event) => {
+    setMicListening(false);
+    if (event.error === "not-allowed") {
+      setStatus("Нет доступа к микрофону — разрешите его в настройках браузера.", true);
+    } else if (event.error !== "aborted" && event.error !== "no-speech") {
+      setStatus(`Ошибка голосового ввода: ${event.error}`, true);
+    }
+  });
+  recognition.addEventListener("result", (event) => {
+    let transcript = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    applySpokenQuery(transcript);
+  });
+} else {
+  els.mic.disabled = true;
+  els.mic.title = "Голосовой ввод недоступен (нужен Chrome)";
+}
+
+els.mic.addEventListener("mousedown", (e) => e.preventDefault());
+els.mic.addEventListener("click", () => {
+  if (!recognition) {
+    setStatus("Голосовой ввод недоступен в этом браузере (нужен Chrome).", true);
+    return;
+  }
+  if (els.mic.classList.contains("listening")) {
+    recognition.stop();
+    return;
+  }
+  try {
+    recognition.start();
+  } catch (err) {
+    console.error(err);
+    setStatus("Не удалось запустить микрофон.", true);
+  }
+});
 
 els.input.addEventListener("input", renderSuggestions);
 els.input.addEventListener("focus", renderSuggestions);
