@@ -1,4 +1,4 @@
-import { buildIndex, lookupProducts, normalizeKey } from "./lookup.js";
+const { buildIndex, lookupProducts, normalizeKey } = globalThis.FormulasLookup;
 
 const els = {
   input: document.getElementById("conditionInput"),
@@ -30,7 +30,7 @@ async function loadDefault() {
     applyCatalog(await res.json());
   } catch (err) {
     setStatus(
-      "Не удалось загрузить data.json. Откройте страницу через локальный сервер из корня репозитория (python -m http.server 8080) или выберите файл вручную.",
+      "Автозагрузка data.json недоступна (откройте через python -m http.server 8080 или выберите файл ниже: Загрузить data.json).",
       true,
     );
     console.error(err);

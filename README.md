@@ -114,7 +114,7 @@ Open <http://localhost:8080/web/>. Start the server **from the repository root**
 
 Type to search conditions (typeahead matches display text and aliases), pick several conditions, optionally filter by category. Products recommended and not recommended are shown separately; avoid takes priority over recommend.
 
-`file://` note: browsers block `fetch` for local files, so opening `web/index.html` by double-click will show an error. Either use the server above or click **Загрузить data.json** in the page and choose `data/data.json` manually.
+**Without a server:** double-click `web/index.html`, then click **Загрузить data.json** and choose `data/data.json`. After a successful load the status line shows `Загружено условий: …` and the category list fills in. (Browsers block auto-`fetch` on `file://`, so the manual picker is required.)
 
 ## Tests
 
@@ -145,6 +145,6 @@ Identical conditions (same normalized key) are merged automatically; identical p
 - **`Продукт` vs `продукт` categories:** the source document uses both spellings (capital and lowercase) as table headers, so they appear as two separate categories in the filter. Unify the `category` column in the CSV (e.g. change `продукт` → `Продукт`) and rebuild if you want one. Note a re-import brings the split back.
 - **Placeholder «Нет» conditions:** some cells just contain `Нет` ("none"). These import as a literal condition named `Нет` that matches every product with such a placeholder. Remove those rows from `data/data.csv` if they are noise (re-import will bring them back).
 - **Cells with inline numbering:** a cell like `Если …, 2. Если …` (number not at a line start) is not split; fix manually in the CSV (see "Split a multi-condition cell manually").
-- **`file://` does not work** for the UI without the manual JSON picker; use `python -m http.server`.
+- **`file://`:** page scripts load, but auto-`fetch` of `data.json` does not — use **Загрузить data.json** (or the local server for auto-load).
 - **`Formulas.doc` and `_formulas_*` extracts** are local artifacts; `_formulas_*` are git-ignored, `Formulas.doc` is intentionally not force-added.
 - **Python caches / `.superpowers/`** are git-ignored.

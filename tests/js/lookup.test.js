@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeKey, buildIndex, lookupProducts } from "../../web/lookup.js";
+import "../../web/lookup.js";
+
+const { normalizeKey, buildIndex, lookupProducts } = globalThis.FormulasLookup;
 
 test("normalizeKey matches Python rules for yo/case/punct", () => {
   assert.equal(normalizeKey("  Уран. "), normalizeKey("уран"));
