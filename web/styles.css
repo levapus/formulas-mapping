@@ -138,7 +138,8 @@ select { margin-top: 0.35rem; }
 .results-table th:nth-child(3),
 .results-table td.check-cell {
   text-align: center;
-  width: 8.5rem;
+  width: 10.5rem;
+  white-space: nowrap;
 }
 .results-table tr.category-row td {
   background: #f0ebe3;
