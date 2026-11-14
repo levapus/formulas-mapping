@@ -33,6 +33,12 @@ input, select {
 }
 .suggestions li { padding: 0.45rem 0.65rem; cursor: pointer; }
 .suggestions li:hover, .suggestions li.active { background: #f0ebe3; }
+.suggestions li.suggestions-empty {
+  cursor: default;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.suggestions li.suggestions-empty:hover { background: transparent; }
 .suggestion-pager {
   display: flex;
   align-items: center;

@@ -69,11 +69,29 @@ function applyCatalog(data) {
   setStatus(`Загружено условий: ${catalog.conditions.length}`);
 }
 
+function conditionMatchesCategory(cond, categoryFilter) {
+  if (!categoryFilter) return true;
+  return (cond.mappings || []).some((m) => m.category === categoryFilter);
+}
+
+function pruneSelectedForCategory() {
+  const categoryFilter = els.category.value || null;
+  if (!categoryFilter) return;
+  for (const key of [...selected.keys()]) {
+    const cond = index.get(key);
+    if (!cond || !conditionMatchesCategory(cond, categoryFilter)) {
+      selected.delete(key);
+    }
+  }
+}
+
 function filteredSuggestions(query) {
   const q = normalizeKey(query);
+  const categoryFilter = els.category.value || null;
   if (!catalog) return [];
   return catalog.conditions.filter((c) => {
     if (selected.has(c.key)) return false;
+    if (!conditionMatchesCategory(c, categoryFilter)) return false;
     if (!q) return true;
     if (c.key.includes(q)) return true;
     if (normalizeKey(c.display).includes(q)) return true;
@@ -93,8 +111,23 @@ function resetSuggestionPaging() {
 
 function paintSuggestions() {
   els.suggestions.innerHTML = "";
-  if (!suggestionMatches.length || document.activeElement !== els.input) {
+  if (document.activeElement !== els.input) {
     hideSuggestionPanel();
+    return;
+  }
+
+  if (!suggestionMatches.length) {
+    const empty = document.createElement("li");
+    empty.className = "suggestions-empty";
+    empty.textContent = els.category.value
+      ? "Нет условий для выбранной категории"
+      : "Нет условий";
+    empty.addEventListener("mousedown", (e) => e.preventDefault());
+    els.suggestions.appendChild(empty);
+    els.suggestionPageInfo.textContent = "0 из 0";
+    els.suggestionPrev.disabled = true;
+    els.suggestionNext.disabled = true;
+    els.suggestionPanel.hidden = false;
     return;
   }
 
@@ -190,6 +223,7 @@ function renderGroups(container, groups) {
 }
 
 function render({ showSuggestions = true } = {}) {
+  pruneSelectedForCategory();
   renderChips();
   if (showSuggestions) renderSuggestions();
   else hideSuggestionPanel();
@@ -244,7 +278,10 @@ els.suggestionPrev.addEventListener("mousedown", (e) => e.preventDefault());
 els.suggestionNext.addEventListener("mousedown", (e) => e.preventDefault());
 els.suggestionPrev.addEventListener("click", () => goSuggestionPage(-1));
 els.suggestionNext.addEventListener("click", () => goSuggestionPage(1));
-els.category.addEventListener("change", render);
+els.category.addEventListener("change", () => {
+  pruneSelectedForCategory();
+  render();
+});
 els.file.addEventListener("change", async () => {
   const file = els.file.files?.[0];
   if (!file) return;
