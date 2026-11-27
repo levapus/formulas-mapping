@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Формулы — подбор продуктов</title>
-    <link rel="stylesheet" href="styles.css?v=3" />
+    <link rel="stylesheet" href="styles.css?v=6" />
   </head>
   <body>
     <div class="app-shell">
@@ -20,8 +20,9 @@
           </button>
           <label class="file-override-label">
             Другой файл (не по умолчанию)
-            <input id="fileInput" type="file" accept="application/json,.json" />
+            <input id="fileInput" type="file" accept="application/json,.json,text/csv,.csv" />
           </label>
+          <p class="data-source-label">JSON как есть, или CSV — соберётся в каталог в браузере</p>
         </div>
         <div class="view-mode-block">
           <span class="field-label">Таблица</span>
@@ -86,6 +87,9 @@
               <div id="avoidChips" class="chips"></div>
             </div>
           </div>
+          <button type="button" id="clearConditions" class="clear-conditions-btn" disabled title="Снять все выбранные условия">
+            Очистить все
+          </button>
         </div>
 
         <p id="status" class="status"></p>
@@ -110,8 +114,9 @@
       </main>
     </div>
     <!-- Classic scripts (not type=module) so file:// double-click + JSON picker works in Chrome -->
-    <script src="lookup.js?v=3"></script>
-    <script src="xlsx-export.js?v=3"></script>
-    <script src="app.js?v=3"></script>
+    <script src="lookup.js?v=6"></script>
+    <script src="catalog.js?v=6"></script>
+    <script src="xlsx-export.js?v=6"></script>
+    <script src="app.js?v=6"></script>
   </body>
 </html>
