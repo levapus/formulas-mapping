@@ -2,27 +2,19 @@
 
 Offline lookup: select conditions from `Formulas.doc` tables and see matching products (recommended / not recommended / neutral).
 
-**Full documentation**
+**Full documentation:** [English guide](docs/guide.en.md) · [Russian guide](docs/guide.ru.md) <sup>ru</sup>
 
-| Language | Guide |
-|----------|--------|
-| English | [docs/guide.en.md](docs/guide.en.md) |
-| Русский | [docs/guide.ru.md](docs/guide.ru.md) |
+## Table of contents
 
-## Table of contents (guides)
-
-Both guides cover the same topics:
-
-| Topic | English | Русский |
-|-------|---------|---------|
-| What is this | [What is this?](docs/guide.en.md#what-is-this) | [Что это?](docs/guide.ru.md#что-это) |
-| How to install | [How to install](docs/guide.en.md#how-to-install) | [Как установить](docs/guide.ru.md#как-установить) |
-| Run with server | [With a local server (Python)](docs/guide.en.md#with-a-local-server-python) | [С локальным сервером (Python)](docs/guide.ru.md#с-локальным-сервером-python) |
-| Run without server | [Without Python / without a server](docs/guide.en.md#without-python--without-a-server) | [Без Python / без сервера](docs/guide.ru.md#без-python--без-сервера) |
-| Word → CSV → JSON workflow | [Workflow: Word → CSV → JSON](docs/guide.en.md#workflow-word--csv--json) | [Процесс: Word → CSV → JSON](docs/guide.ru.md#процесс-word--csv--json) |
-| Import from Word | [How to import from Word](docs/guide.en.md#how-to-import-from-word) | [Как импортировать из Word](docs/guide.ru.md#как-импортировать-из-word) |
-| Add / edit / delete CSV → JSON | [Edit CSV and rebuild JSON](docs/guide.en.md#edit-csv-and-rebuild-json) | [Правка CSV и сборка JSON](docs/guide.ru.md#правка-csv-и-сборка-json) |
-| CSV format | [CSV format](docs/guide.en.md#csv-format) | [Формат CSV](docs/guide.ru.md#формат-csv) |
+- [What is this?](docs/guide.en.md#what-is-this) <sup>[ru](docs/guide.ru.md#что-это)</sup>
+- [How to install](docs/guide.en.md#how-to-install) <sup>[ru](docs/guide.ru.md#как-установить)</sup>
+- [How to run](docs/guide.en.md#how-to-run)
+  - [With a local server (Python)](docs/guide.en.md#with-a-local-server-python) <sup>[ru](docs/guide.ru.md#с-локальным-сервером-python)</sup>
+  - [Without Python / without a server](docs/guide.en.md#without-python--without-a-server) <sup>[ru](docs/guide.ru.md#без-python--без-сервера)</sup>
+- [Workflow: Word → CSV → JSON](docs/guide.en.md#workflow-word--csv--json) <sup>[ru](docs/guide.ru.md#процесс-word--csv--json)</sup>
+- [How to import from Word](docs/guide.en.md#how-to-import-from-word) <sup>[ru](docs/guide.ru.md#как-импортировать-из-word)</sup>
+- [Edit CSV and rebuild JSON](docs/guide.en.md#edit-csv-and-rebuild-json) <sup>[ru](docs/guide.ru.md#правка-csv-и-сборка-json)</sup>
+- [CSV format](docs/guide.en.md#csv-format) <sup>[ru](docs/guide.ru.md#формат-csv)</sup>
 
 ## Quick start
 
@@ -33,7 +25,7 @@ python -m http.server 8080
 
 Open <http://localhost:8080/web/>.
 
-Or open `web/index.html` and use **Загрузить данные** → `data/data.json`.
+Or open `web/index.html` via `file://` and load the JSON manually: **Другой файл (не по умолчанию)** → `data/data.json` (browsers block auto-fetch on `file://`).
 
 Rebuild UI data after CSV edits:
 

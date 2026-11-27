@@ -96,10 +96,16 @@ The page auto-loads `../data/data.json`. Start the server from the **repo root**
 
 ### Without Python / without a server
 
-1. Double-click `web/index.html` (or open it in the browser).
-2. In the left pane, use **Загрузить данные** and choose `data/data.json`.
+If you open the UI as a local file, for example:
 
-Browsers block automatic `fetch` on `file://`, so the manual file picker is required. After a successful load, the status line shows how many conditions/products were loaded and the category list fills in.
+`file:///C:/…/mapping/web/index.html`
+
+browsers **block** automatic loading of `data/data.json`. You must load it yourself:
+
+1. Double-click `web/index.html` (or open that `file://` URL).
+2. In the left pane, under **Данные**, use **Другой файл (не по умолчанию)** and choose `data/data.json`.
+
+**Загрузить по умолчанию** only works when the page is served over HTTP (see above). After a successful load, the status line shows how many conditions/products were loaded and the category list fills in.
 
 You can also use any other static file server (Node `npx serve`, IIS, nginx, etc.) pointed at the repo root, then open `/web/`.
 
@@ -267,6 +273,6 @@ Run both before committing data or script changes.
 - **`Продукт` vs `продукт`:** two spellings in Word become two categories; unify in CSV and rebuild (re-import brings the split back).
 - **Placeholder `Нет`:** imported as a real condition; delete those CSV rows if they are noise.
 - **Inline numbering** (e.g. `Если …, 2. Если …` mid-line) is not auto-split; fix in CSV.
-- **`file://`:** use **Загрузить данные**.
+- **`file://`:** auto-load of `data/data.json` is blocked; use **Другой файл (не по умолчанию)** and pick `data/data.json` (or use the local HTTP server).
 - **Re-import overwrites** all manual CSV edits.
 - `Formulas.doc` may be untracked; `_formulas_*` extracts are gitignored.
