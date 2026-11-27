@@ -9,6 +9,10 @@ const catalogFromCsvText = globalThis.FormulasCatalog?.catalogFromCsvText;
 const resultsToXlsx = globalThis.FormulasXlsx?.resultsToXlsx;
 
 const els = {
+  appShell: document.getElementById("appShell"),
+  mainPane: document.getElementById("mainPane"),
+  loadingOverlay: document.getElementById("loadingOverlay"),
+  loadingMessage: document.getElementById("loadingMessage"),
   category: document.getElementById("categoryFilter"),
   status: document.getElementById("status"),
   resultsBody: document.getElementById("resultsBody"),
@@ -147,19 +151,110 @@ function setDataSourceLabel(label) {
   }
 }
 
-async function loadDefault() {
-  try {
-    const res = await fetch(DEFAULT_DATA_PATH);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    applyCatalog(await res.json(), DEFAULT_DATA_LABEL);
-  } catch (err) {
-    setDataSourceLabel("не загружено (нужен сервер или другой файл)");
-    setStatus(
-      `Не удалось загрузить ${DEFAULT_DATA_LABEL}. Откройте через python -m http.server 8080 или укажите другой JSON слева.`,
-      true,
-    );
-    console.error(err);
+function mainControls() {
+  const list = [els.category, els.clearConditions];
+  for (const picker of pickers) {
+    list.push(picker.input, picker.mic, picker.prev, picker.next);
   }
+  return list;
+}
+
+/** Right pane stays grey/disabled until a catalog is loaded. */
+function setWorkspaceReady(ready) {
+  if (els.mainPane) {
+    els.mainPane.classList.toggle("is-awaiting-data", !ready);
+    els.mainPane.setAttribute("aria-disabled", ready ? "false" : "true");
+  }
+  for (const el of mainControls()) {
+    if (!el) continue;
+    if (!ready) {
+      el.disabled = true;
+    }
+  }
+  if (ready) {
+    if (els.clearConditions) els.clearConditions.disabled = selected.size === 0;
+    // Re-enable inputs/mic/pager; save/view-mode live in left pane.
+    for (const picker of pickers) {
+      if (picker.input) picker.input.disabled = false;
+      if (picker.mic && picker.mic.title.includes("недоступен")) {
+        picker.mic.disabled = true;
+      } else if (picker.mic) {
+        picker.mic.disabled = false;
+      }
+      if (picker.prev) picker.prev.disabled = true;
+      if (picker.next) picker.next.disabled = true;
+    }
+    if (els.category) els.category.disabled = false;
+  }
+}
+
+/** Spinner + grey right pane while a file/fetch is in progress. Left pane stays usable. */
+function setLoading(on, message = "Загрузка данных…") {
+  if (els.mainPane) els.mainPane.classList.toggle("is-loading", on);
+  if (els.loadingOverlay) {
+    els.loadingOverlay.hidden = !on;
+    els.loadingOverlay.setAttribute("aria-busy", on ? "true" : "false");
+  }
+  if (els.loadingMessage && on) {
+    els.loadingMessage.textContent = message;
+  }
+  // Freeze left view-mode / save during load; keep reload + file picker enabled.
+  const freeze = [els.viewModeAll, els.viewModeMatched, els.saveResults];
+  for (const el of freeze) {
+    if (!el) continue;
+    if (on) {
+      if (!el.dataset.wasDisabled) {
+        el.dataset.wasDisabled = el.disabled ? "1" : "0";
+      }
+      el.disabled = true;
+    } else if (el.dataset.wasDisabled != null) {
+      el.disabled = el.dataset.wasDisabled === "1";
+      delete el.dataset.wasDisabled;
+    }
+  }
+  if (!on) {
+    setWorkspaceReady(Boolean(catalog));
+    if (els.saveResults) els.saveResults.disabled = visibleRows.length === 0;
+  } else {
+    for (const el of mainControls()) {
+      if (el) el.disabled = true;
+    }
+  }
+}
+
+function paintLoadingFrame() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  });
+}
+
+async function withLoading(message, work) {
+  setLoading(true, message);
+  await paintLoadingFrame();
+  try {
+    return await work();
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function loadDefault() {
+  await withLoading(`Загрузка ${DEFAULT_DATA_LABEL}…`, async () => {
+    try {
+      const res = await fetch(DEFAULT_DATA_PATH);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      applyCatalog(await res.json(), DEFAULT_DATA_LABEL);
+    } catch (err) {
+      catalog = null;
+      setWorkspaceReady(false);
+      setDataSourceLabel("не загружено (нужен сервер или другой файл)");
+      setStatus(
+        `Не удалось загрузить ${DEFAULT_DATA_LABEL}. Откройте через python -m http.server 8080 или укажите другой JSON слева.`,
+        true,
+      );
+      console.error(err);
+    }
+  });
 }
 
 function applyCatalog(data, sourceLabel = DEFAULT_DATA_LABEL) {
@@ -170,15 +265,20 @@ function applyCatalog(data, sourceLabel = DEFAULT_DATA_LABEL) {
   index = buildIndex(catalog);
   allProducts = listAllProducts(catalog);
   selected.clear();
-  for (const picker of pickers) picker.input.value = "";
-  els.category.innerHTML = `<option value="">Все</option>`;
-  for (const c of catalog.categories || []) {
-    const opt = document.createElement("option");
-    opt.value = c;
-    opt.textContent = c;
-    els.category.appendChild(opt);
+  for (const picker of pickers) {
+    if (picker.input) picker.input.value = "";
+  }
+  if (els.category) {
+    els.category.innerHTML = `<option value="">Все</option>`;
+    for (const c of catalog.categories || []) {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      els.category.appendChild(opt);
+    }
   }
   setDataSourceLabel(sourceLabel);
+  setWorkspaceReady(true);
   render();
   setStatus(
     `Загружено из ${sourceLabel}: ${catalog.conditions.length} условий, ${allProducts.length} продуктов`,
@@ -645,20 +745,25 @@ function isCsvFile(file) {
 els.file?.addEventListener("change", async () => {
   const file = els.file.files?.[0];
   if (!file) return;
-  try {
-    const text = await file.text();
-    if (isCsvFile(file)) {
-      if (typeof catalogFromCsvText !== "function") {
-        throw new Error("catalog.js не загружен");
+  const kind = isCsvFile(file) ? "CSV" : "JSON";
+  await withLoading(`Загрузка ${file.name} (${kind})…`, async () => {
+    try {
+      const text = await file.text();
+      if (isCsvFile(file)) {
+        if (typeof catalogFromCsvText !== "function") {
+          throw new Error("catalog.js не загружен");
+        }
+        // Heavy sync parse — loading frame already painted.
+        applyCatalog(catalogFromCsvText(text), file.name);
+      } else {
+        applyCatalog(JSON.parse(text), file.name);
       }
-      applyCatalog(catalogFromCsvText(text), file.name);
-    } else {
-      applyCatalog(JSON.parse(text), file.name);
+    } catch (err) {
+      setStatus("Ошибка чтения JSON/CSV", true);
+      console.error(err);
     }
-  } catch (err) {
-    setStatus("Ошибка чтения JSON/CSV", true);
-    console.error(err);
-  }
+  });
 });
 
+setWorkspaceReady(false);
 loadDefault();
