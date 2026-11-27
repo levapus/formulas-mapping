@@ -9,7 +9,9 @@ from scripts.csv_io import read_csv
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build data.json from data.csv")
+    parser = argparse.ArgumentParser(
+        description="Build data.json from data.csv (JS equivalent: node scripts/build_json.mjs)",
+    )
     parser.add_argument(
         "--csv",
         type=Path,

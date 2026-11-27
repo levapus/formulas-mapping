@@ -124,13 +124,13 @@ Formulas.doc  ──(import_formulas)──►  data/data.csv  ──(build_json
 2. **Импорт (`python -m scripts.import_formulas`)**  
    Читает таблицы через Word COM, делит ячейки условий, пишет в `data/data.csv` по одной строке на связь продукт–условие–полярность.
 
-3. **Сборка (`python -m scripts.build_json`)**  
-   Читает CSV, нормализует ключи, сливает синонимы (`canonical_key`), убирает дубликаты, пишет `data/data.json`.
+3. **Сборка (`node scripts/build_json.mjs` или `python -m scripts.build_json`)**  
+   Читает CSV, нормализует ключи, сливает синонимы (`canonical_key`), убирает дубликаты, пишет `data/data.json`. JS и Python дают один и тот же каталог.
 
 4. **UI (`web/`)**  
-   Загружает JSON, фильтрует по категории и условиям, показывает таблицу, экспортирует Excel.
+   Загружает JSON (или CSV через **Другой файл**), фильтрует по категории и условиям, показывает таблицу, экспортирует Excel. **Очистить все** снимает выбранные условия.
 
-Повседневные правки обычно без Word: меняете CSV, затем только `build_json`.
+Повседневные правки обычно без Word: меняете CSV, затем `build_json` (Node или Python), либо загружаете CSV прямо в UI.
 
 ---
 
@@ -191,19 +191,26 @@ python -m scripts.build_json
 
 ### Преобразовать CSV → JSON
 
-После любой правки CSV:
+После любой правки CSV пересоберите каталог (любой из вариантов):
 
 ```bash
+# JavaScript (Node)
+node scripts/build_json.mjs
+
+# или Python
 python -m scripts.build_json
 ```
 
 С путями по желанию:
 
 ```bash
+node scripts/build_json.mjs --csv data/data.csv --out data/data.json
 python -m scripts.build_json --csv data/data.csv --out data/data.json
 ```
 
-Обновите UI (или снова **Загрузить данные**), чтобы подтянуть новый JSON.
+В UI можно сразу выбрать `data.csv` через **Другой файл** — каталог соберётся в браузере без отдельной сборки. Для автозагрузки по HTTP держите актуальный `data/data.json` в репозитории.
+
+Обновите UI (или снова выберите файл), чтобы подтянуть изменения.
 
 ---
 
@@ -244,7 +251,7 @@ category,product,polarity,condition,condition_key,canonical_key,source_table,sou
 
 Левая панель:
 
-- **Данные** — по умолчанию `data/data.json` (автозагрузка при локальном сервере; **Загрузить по умолчанию** перезагружает). **Другой файл (не по умолчанию)** — только если нужен нестандартный JSON (обязательно на `file://`).
+- **Данные** — по умолчанию `data/data.json` (автозагрузка при локальном сервере; **Загрузить по умолчанию** перезагружает). **Другой файл** принимает `.json` или `.csv` (CSV собирается в браузере). На `file://` файл нужно выбрать вручную.
 - **Таблица** — *Все продукты* или *Только совпадения*
 - **Сохранить результаты (Excel)** — скачать видимую таблицу как `.xlsx`
 
@@ -252,6 +259,7 @@ category,product,polarity,condition,condition_key,canonical_key,source_table,sou
 
 - Фильтр категории
 - Два списка условий: **Рекомендуется** / **Не рекомендуется** (поиск, микрофон в Chrome, постранично)
+- **Очистить все** — снимает все выбранные условия
 - Таблица результатов с цветными галочками
 - Строка статуса со счётчиками
 
@@ -261,7 +269,7 @@ category,product,polarity,condition,condition_key,canonical_key,source_table,sou
 
 ```bash
 python -m pytest -v
-node --test tests/js/lookup.test.js
+npm run test:js
 ```
 
 Запускайте оба набора перед коммитом данных или скриптов.

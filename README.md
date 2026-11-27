@@ -27,11 +27,14 @@ Open <http://localhost:8080/web/>.
 
 Or open `web/index.html` via `file://` and load the JSON manually: **Другой файл (не по умолчанию)** → `data/data.json` (browsers block auto-fetch on `file://`).
 
-Rebuild UI data after CSV edits:
+Rebuild UI data after CSV edits (JS or Python):
 
 ```bash
-python -m scripts.build_json
+node scripts/build_json.mjs
+# or: python -m scripts.build_json
 ```
+
+In the UI, **Другой файл** accepts `.json` or `.csv` (CSV is built to a catalog in the browser).
 
 Import from Word (Windows + Word only):
 
@@ -44,10 +47,10 @@ python -m scripts.build_json
 
 ```text
 Formulas.doc          Source Word document (optional local copy)
-scripts/              Python: import_formulas, build_json, catalog, csv_io, …
+scripts/              Python import + build_json; also `build_json.mjs` (Node)
 data/data.csv         Editable source of truth
 data/data.json        Generated catalog for the UI (do not hand-edit)
-web/                  Static UI (+ Excel export)
+web/                  Static UI (+ catalog.js CSV→JSON, Excel export)
 docs/guide.en.md      User guide (English)
 docs/guide.ru.md      Руководство (русский)
 tests/                pytest + node tests
@@ -57,5 +60,5 @@ tests/                pytest + node tests
 
 ```bash
 python -m pytest -v
-node --test tests/js/lookup.test.js
+npm run test:js
 ```

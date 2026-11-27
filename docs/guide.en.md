@@ -124,13 +124,13 @@ Formulas.doc  ──(import_formulas)──►  data/data.csv  ──(build_json
 2. **Import (`python -m scripts.import_formulas`)**  
    Reads tables via Word COM, splits condition cells, writes one CSV row per product–condition–polarity mapping into `data/data.csv`.
 
-3. **Build (`python -m scripts.build_json`)**  
-   Reads the CSV, normalizes keys, merges synonyms (`canonical_key`), deduplicates mappings, writes `data/data.json`.
+3. **Build (`node scripts/build_json.mjs` or `python -m scripts.build_json`)**  
+   Reads the CSV, normalizes keys, merges synonyms (`canonical_key`), deduplicates mappings, writes `data/data.json`. The JS and Python builders produce the same catalog.
 
 4. **UI (`web/`)**  
-   Loads the JSON, lets you filter by category and conditions, shows the product table, exports Excel.
+   Loads the JSON (or a CSV via **Другой файл**), lets you filter by category and conditions, shows the product table, exports Excel. **Очистить все** clears selected conditions.
 
-Day-to-day edits usually skip Word: change the CSV, then run `build_json` only.
+Day-to-day edits usually skip Word: change the CSV, then run `build_json` (Node or Python), or load the CSV directly in the UI.
 
 ---
 
@@ -191,19 +191,26 @@ Delete the CSV line. Rows with empty `product` or `condition`, or a `polarity` o
 
 ### Transform CSV → JSON
 
-After any CSV change:
+After any CSV change, rebuild the catalog (either tool is fine):
 
 ```bash
+# JavaScript (Node)
+node scripts/build_json.mjs
+
+# or Python
 python -m scripts.build_json
 ```
 
 Optional paths:
 
 ```bash
+node scripts/build_json.mjs --csv data/data.csv --out data/data.json
 python -m scripts.build_json --csv data/data.csv --out data/data.json
 ```
 
-Reload the UI (or use **Загрузить данные** again) to pick up the new JSON.
+In the UI you can also load `data.csv` directly via **Другой файл** — the browser builds the catalog in memory (no rebuild step). For the default HTTP auto-load path, keep committing an up-to-date `data/data.json`.
+
+Reload the UI (or pick the file again) to pick up changes.
 
 ---
 
@@ -244,7 +251,7 @@ category,product,polarity,condition,condition_key,canonical_key,source_table,sou
 
 Left pane:
 
-- **Данные** — defaults to `data/data.json` (auto-load with a local server; **Загрузить по умолчанию** reloads it). Use **Другой файл (не по умолчанию)** only to pick a non-default JSON (required on `file://`).
+- **Данные** — defaults to `data/data.json` (auto-load with a local server; **Загрузить по умолчанию** reloads it). **Другой файл** can load another `.json` or a `.csv` (built in-browser). On `file://`, pick the file manually.
 - **Таблица** — *Все продукты* vs *Только совпадения*
 - **Сохранить результаты (Excel)** — download the visible table as `.xlsx`
 
@@ -252,6 +259,7 @@ Main pane:
 
 - Category filter
 - Two condition pickers: **Рекомендуется** / **Не рекомендуется** (search, optional mic in Chrome, paging)
+- **Очистить все** — clears all selected conditions
 - Results table with colored checkboxes
 - Status line with counts
 
@@ -261,7 +269,7 @@ Main pane:
 
 ```bash
 python -m pytest -v
-node --test tests/js/lookup.test.js
+npm run test:js
 ```
 
 Run both before committing data or script changes.

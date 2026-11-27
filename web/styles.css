@@ -144,6 +144,26 @@ select { margin-top: 0.35rem; }
   grid-template-columns: 1fr 1fr;
   gap: 0.85rem 1rem;
 }
+.clear-conditions-btn {
+  display: block;
+  margin-top: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--muted);
+}
+.clear-conditions-btn:hover:not(:disabled) {
+  background: #f5f1ea;
+  color: var(--ink);
+}
+.clear-conditions-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
 @media (max-width: 720px) {
   .conditions-grid { grid-template-columns: 1fr; }
 }

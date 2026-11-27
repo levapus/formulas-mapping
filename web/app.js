@@ -5,6 +5,7 @@ const {
   filterProductRows,
   normalizeKey,
 } = globalThis.FormulasLookup;
+const catalogFromCsvText = globalThis.FormulasCatalog?.catalogFromCsvText;
 const resultsToXlsx = globalThis.FormulasXlsx?.resultsToXlsx;
 
 const els = {
@@ -19,6 +20,7 @@ const els = {
   reloadDefault: document.getElementById("reloadDefault"),
   dataSourceLabel: document.getElementById("dataSourceLabel"),
   file: document.getElementById("fileInput"),
+  clearConditions: document.getElementById("clearConditions"),
 };
 
 const DEFAULT_DATA_PATH = "../data/data.json";
@@ -327,6 +329,7 @@ function addCondition(picker, key, display) {
 
 function renderChips() {
   for (const picker of pickers) {
+    if (!picker.chips) continue;
     picker.chips.innerHTML = "";
     for (const [key, meta] of selected) {
       if (meta.polarity !== picker.polarity) continue;
@@ -345,6 +348,19 @@ function renderChips() {
       picker.chips.appendChild(chip);
     }
   }
+  if (els.clearConditions) {
+    els.clearConditions.disabled = selected.size === 0;
+  }
+}
+
+function clearAllConditions() {
+  if (!selected.size) return;
+  selected.clear();
+  for (const picker of pickers) {
+    if (picker.input) picker.input.value = "";
+  }
+  hideAllSuggestionPanels();
+  render({ showSuggestions: false });
 }
 
 function checkCell(checked, tone) {
@@ -616,17 +632,31 @@ function downloadResultsExcel() {
 }
 
 els.saveResults?.addEventListener("click", downloadResultsExcel);
+els.clearConditions?.addEventListener("click", clearAllConditions);
 els.reloadDefault?.addEventListener("click", () => {
   if (els.file) els.file.value = "";
   loadDefault();
 });
+function isCsvFile(file) {
+  const name = (file.name || "").toLowerCase();
+  return name.endsWith(".csv") || file.type === "text/csv";
+}
+
 els.file?.addEventListener("change", async () => {
   const file = els.file.files?.[0];
   if (!file) return;
   try {
-    applyCatalog(JSON.parse(await file.text()), file.name);
+    const text = await file.text();
+    if (isCsvFile(file)) {
+      if (typeof catalogFromCsvText !== "function") {
+        throw new Error("catalog.js не загружен");
+      }
+      applyCatalog(catalogFromCsvText(text), file.name);
+    } else {
+      applyCatalog(JSON.parse(text), file.name);
+    }
   } catch (err) {
-    setStatus("Ошибка чтения JSON", true);
+    setStatus("Ошибка чтения JSON/CSV", true);
     console.error(err);
   }
 });
