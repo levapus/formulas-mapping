@@ -97,6 +97,59 @@
     return rows;
   }
 
+  /**
+   * @param {{recommend: boolean, avoid: boolean, neutral: boolean}[]} rows
+   * @param {"all"|"matched"} mode
+   */
+  function filterProductRows(rows, mode) {
+    if (mode === "matched") {
+      return rows.filter((r) => r.recommend || r.avoid);
+    }
+    return rows;
+  }
+
+  function csvEscape(value) {
+    const s = String(value ?? "");
+    if (/[",\r\n]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
+    return s;
+  }
+
+  /**
+   * Build UTF-8 CSV (with BOM) of visible result rows for Excel.
+   * @param {{category: string, product: string, recommend: boolean, avoid: boolean, neutral: boolean}[]} rows
+   * @param {{conditions?: string[]}} [opts]
+   */
+  function resultsToCsv(rows, opts = {}) {
+    const headers = [
+      "category",
+      "product",
+      "recommend",
+      "avoid",
+      "neutral",
+      "status",
+      "conditions",
+    ];
+    const conditions = (opts.conditions || []).join("; ");
+    const lines = [headers.join(",")];
+    for (const row of rows) {
+      let status = "нейтрально";
+      if (row.avoid) status = "не рекомендуется";
+      else if (row.recommend) status = "рекомендуется";
+      lines.push(
+        [
+          csvEscape(row.category),
+          csvEscape(row.product),
+          row.recommend ? "1" : "0",
+          row.avoid ? "1" : "0",
+          row.neutral ? "1" : "0",
+          csvEscape(status),
+          csvEscape(conditions),
+        ].join(","),
+      );
+    }
+    return `\uFEFF${lines.join("\r\n")}\r\n`;
+  }
+
   function lookupProducts(index, selectedKeys, categoryFilter) {
     // Build a temporary product list from the flagged hits only (legacy API).
     const flaggedOnly = [];
@@ -139,6 +192,8 @@
     buildIndex,
     listAllProducts,
     lookupProductFlags,
+    filterProductRows,
+    resultsToCsv,
     lookupProducts,
   };
 })(globalThis);

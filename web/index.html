@@ -4,66 +4,114 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Формулы — подбор продуктов</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=3" />
   </head>
   <body>
-    <main>
-      <h1>Подбор продуктов по условиям</h1>
-      <p class="hint">Таблица показывает все продукты. Условия ставят галочки «рекомендуется» / «не рекомендуется»; остальные — «нейтрально».</p>
-
-      <label class="block">
-        Категория
-        <select id="categoryFilter">
-          <option value="">Все</option>
-        </select>
-      </label>
-
-      <div class="block">
-        <span class="field-label">Условие</span>
-        <div class="condition-row">
-          <input id="conditionInput" type="search" autocomplete="off" placeholder="Начните вводить…" />
-          <button type="button" id="micButton" class="mic-button" title="Голосовой ввод (например: Луна)" aria-label="Голосовой ввод">
-            🎤
+    <div class="app-shell">
+      <aside class="left-pane" aria-label="Настройки">
+        <div class="file-load-block">
+          <span class="field-label">Данные</span>
+          <p class="data-default-path" title="Путь по умолчанию">
+            По умолчанию: <code id="defaultDataPath">data/data.json</code>
+          </p>
+          <p id="dataSourceLabel" class="data-source-label">Источник: ещё не загружено</p>
+          <button type="button" id="reloadDefault" class="pane-action-btn" title="Загрузить data/data.json">
+            Загрузить по умолчанию
           </button>
+          <label class="file-override-label">
+            Другой файл (не по умолчанию)
+            <input id="fileInput" type="file" accept="application/json,.json" />
+          </label>
         </div>
-      </div>
-      <div id="suggestionPanel" class="suggestion-panel" hidden>
-        <ul id="suggestions" class="suggestions"></ul>
-        <div class="suggestion-pager">
-          <button type="button" id="suggestionPrev">Назад</button>
-          <span id="suggestionPageInfo" class="suggestion-page-info"></span>
-          <button type="button" id="suggestionNext">Вперёд</button>
+        <div class="view-mode-block">
+          <span class="field-label">Таблица</span>
+          <div class="view-mode-toggle" role="group" aria-label="Режим таблицы">
+            <button type="button" id="viewModeAll" class="view-mode-btn" aria-pressed="true" data-mode="all">
+              Все продукты
+            </button>
+            <button type="button" id="viewModeMatched" class="view-mode-btn" aria-pressed="false" data-mode="matched">
+              Только совпадения
+            </button>
+          </div>
         </div>
-      </div>
-      <div id="chips" class="chips"></div>
+        <button type="button" id="saveResults" class="pane-action-btn" disabled title="Скачать текущую таблицу как Excel (.xlsx)">
+          Сохранить результаты (Excel)
+        </button>
+      </aside>
 
-      <p id="status" class="status"></p>
+      <main>
+        <h1>Подбор продуктов по условиям</h1>
+        <p class="hint">Выберите условия в двух списках — «Рекомендуется» и «Не рекомендуется». Переключателем слева можно показать все продукты или только совпадения.</p>
 
-      <section class="results-section">
-        <h2>Результаты</h2>
-        <div class="results-table-wrap">
-          <table id="resultsTable" class="results-table">
-            <thead>
-              <tr>
-                <th>Категория / продукт</th>
-                <th>Рекомендуется</th>
-                <th>Не рекомендуется</th>
-                <th>Нейтрально</th>
-              </tr>
-            </thead>
-            <tbody id="resultsBody"></tbody>
-          </table>
+        <label class="block">
+          Категория
+          <select id="categoryFilter">
+            <option value="">Все</option>
+          </select>
+        </label>
+
+        <div class="block">
+          <span class="field-label">Условия</span>
+          <div class="conditions-grid">
+            <div class="condition-picker condition-picker-recommend" data-polarity="recommend">
+              <span class="field-label picker-label label-recommend">Рекомендуется</span>
+              <div class="condition-row">
+                <input id="recommendInput" type="search" autocomplete="off" placeholder="Начните вводить…" />
+                <button type="button" id="recommendMic" class="mic-button" title="Голосовой ввод" aria-label="Голосовой ввод">🎤</button>
+              </div>
+              <div id="recommendSuggestionPanel" class="suggestion-panel" hidden>
+                <ul id="recommendSuggestions" class="suggestions"></ul>
+                <div class="suggestion-pager">
+                  <button type="button" id="recommendPrev">Назад</button>
+                  <span id="recommendPageInfo" class="suggestion-page-info"></span>
+                  <button type="button" id="recommendNext">Вперёд</button>
+                </div>
+              </div>
+              <div id="recommendChips" class="chips"></div>
+            </div>
+            <div class="condition-picker condition-picker-avoid" data-polarity="avoid">
+              <span class="field-label picker-label label-avoid">Не рекомендуется</span>
+              <div class="condition-row">
+                <input id="avoidInput" type="search" autocomplete="off" placeholder="Начните вводить…" />
+                <button type="button" id="avoidMic" class="mic-button" title="Голосовой ввод" aria-label="Голосовой ввод">🎤</button>
+              </div>
+              <div id="avoidSuggestionPanel" class="suggestion-panel" hidden>
+                <ul id="avoidSuggestions" class="suggestions"></ul>
+                <div class="suggestion-pager">
+                  <button type="button" id="avoidPrev">Назад</button>
+                  <span id="avoidPageInfo" class="suggestion-page-info"></span>
+                  <button type="button" id="avoidNext">Вперёд</button>
+                </div>
+              </div>
+              <div id="avoidChips" class="chips"></div>
+            </div>
+          </div>
         </div>
-        <p id="resultsEmpty" class="results-empty" hidden>Выберите условия, чтобы увидеть продукты</p>
-      </section>
 
-      <label class="block">
-        Загрузить data.json
-        <input id="fileInput" type="file" accept="application/json,.json" />
-      </label>
-    </main>
+        <p id="status" class="status"></p>
+
+        <section class="results-section">
+          <h2>Результаты</h2>
+          <div class="results-table-wrap">
+            <table id="resultsTable" class="results-table">
+              <thead>
+                <tr>
+                  <th>Категория / продукт</th>
+                  <th class="th-recommend">Рекомендуется</th>
+                  <th class="th-avoid">Не рекомендуется</th>
+                  <th>Нейтрально</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+          </div>
+          <p id="resultsEmpty" class="results-empty" hidden>Выберите условия, чтобы увидеть продукты</p>
+        </section>
+      </main>
+    </div>
     <!-- Classic scripts (not type=module) so file:// double-click + JSON picker works in Chrome -->
-    <script src="lookup.js"></script>
-    <script src="app.js"></script>
+    <script src="lookup.js?v=3"></script>
+    <script src="xlsx-export.js?v=3"></script>
+    <script src="app.js?v=3"></script>
   </body>
 </html>

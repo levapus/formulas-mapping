@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import "../../web/lookup.js";
+import "../../web/xlsx-export.js";
 
 const {
   normalizeKey,
@@ -8,7 +9,10 @@ const {
   listAllProducts,
   lookupProducts,
   lookupProductFlags,
+  filterProductRows,
+  resultsToCsv,
 } = globalThis.FormulasLookup;
+const { resultsToXlsx } = globalThis.FormulasXlsx;
 
 test("normalizeKey matches Python rules for yo/case/punct", () => {
   assert.equal(normalizeKey("  Уран. "), normalizeKey("уран"));
@@ -151,4 +155,76 @@ test("lookupProductFlags marks hits on full catalog; others unchecked", () => {
       neutral: false,
     },
   ]);
+});
+
+test("filterProductRows keeps neutrals only in all mode", () => {
+  const rows = [
+    {
+      category: "Напиток",
+      product: "Какао",
+      recommend: true,
+      avoid: false,
+      neutral: false,
+    },
+    {
+      category: "Овощ",
+      product: "Хрен",
+      recommend: false,
+      avoid: false,
+      neutral: true,
+    },
+    {
+      category: "Суп",
+      product: "Борщ",
+      recommend: false,
+      avoid: true,
+      neutral: false,
+    },
+  ];
+  assert.deepEqual(filterProductRows(rows, "all"), rows);
+  assert.deepEqual(filterProductRows(rows, "matched"), [
+    rows[0],
+    rows[2],
+  ]);
+});
+
+test("resultsToCsv exports Excel-friendly UTF-8 BOM CSV", () => {
+  const csv = resultsToCsv(
+    [
+      {
+        category: "Суп",
+        product: 'Борщ, "домашний"',
+        recommend: false,
+        avoid: true,
+        neutral: false,
+      },
+    ],
+    { conditions: ["cond A", "cond B"] },
+  );
+  assert.ok(csv.startsWith("\uFEFF"));
+  assert.match(csv, /category,product,recommend,avoid,neutral,status,conditions/);
+  assert.match(csv, /"Борщ, ""домашний"""/);
+  assert.match(csv, /0,1,0,не рекомендуется,cond A; cond B/);
+});
+
+test("resultsToXlsx builds a ZIP-based .xlsx workbook", () => {
+  const buffer = resultsToXlsx(
+    [
+      {
+        category: "Суп",
+        product: "Борщ",
+        recommend: true,
+        avoid: false,
+        neutral: false,
+      },
+    ],
+    { conditions: ["cond A"] },
+  );
+  const bytes = new Uint8Array(buffer);
+  // ZIP local file header signature "PK\x03\x04"
+  assert.equal(bytes[0], 0x50);
+  assert.equal(bytes[1], 0x4b);
+  assert.equal(bytes[2], 0x03);
+  assert.equal(bytes[3], 0x04);
+  assert.ok(buffer.byteLength > 100);
 });
