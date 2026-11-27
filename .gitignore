@@ -1,3 +1,11 @@
 ﻿# Temporary extract artifacts
 _formulas_extract.txt
 _formulas_tables.json
+
+# Python / tooling
+__pycache__/
+*.pyc
+.pytest_cache/
+.superpowers/
+node_modules/
+package-lock.json
