@@ -4,10 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Формулы — подбор продуктов</title>
-    <link rel="stylesheet" href="styles.css?v=6" />
+    <link rel="stylesheet" href="styles.css?v=8" />
   </head>
   <body>
-    <div class="app-shell">
+    <div id="loadingOverlay" class="loading-overlay" hidden aria-live="polite" aria-busy="false">
+      <div class="loading-card">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <p id="loadingMessage">Загрузка данных…</p>
+      </div>
+    </div>
+    <div class="app-shell" id="appShell">
       <aside class="left-pane" aria-label="Настройки">
         <div class="file-load-block">
           <span class="field-label">Данные</span>
@@ -40,7 +46,8 @@
         </button>
       </aside>
 
-      <main>
+      <main id="mainPane" class="main-pane is-awaiting-data" aria-disabled="true">
+        <p class="awaiting-data-banner">Загрузите данные слева, чтобы пользоваться условиями и результатами</p>
         <h1>Подбор продуктов по условиям</h1>
         <p class="hint">Выберите условия в двух списках — «Рекомендуется» и «Не рекомендуется». Переключателем слева можно показать все продукты или только совпадения.</p>
 
@@ -114,9 +121,9 @@
       </main>
     </div>
     <!-- Classic scripts (not type=module) so file:// double-click + JSON picker works in Chrome -->
-    <script src="lookup.js?v=6"></script>
-    <script src="catalog.js?v=6"></script>
-    <script src="xlsx-export.js?v=6"></script>
-    <script src="app.js?v=6"></script>
+    <script src="lookup.js?v=8"></script>
+    <script src="catalog.js?v=8"></script>
+    <script src="xlsx-export.js?v=8"></script>
+    <script src="app.js?v=8"></script>
   </body>
 </html>

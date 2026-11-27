@@ -19,6 +19,69 @@ body {
   gap: 0;
   min-height: 100vh;
 }
+.main-pane {
+  position: relative;
+  transition: filter 0.15s ease, opacity 0.15s ease;
+}
+.main-pane.is-awaiting-data,
+.main-pane.is-loading {
+  pointer-events: none;
+  user-select: none;
+  filter: grayscale(0.65);
+  opacity: 0.5;
+}
+.awaiting-data-banner {
+  display: none;
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f0ebe3;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.main-pane.is-awaiting-data .awaiting-data-banner {
+  display: block;
+}
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(247, 244, 239, 0.45);
+  pointer-events: none;
+}
+.loading-overlay[hidden] {
+  display: none;
+}
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.1rem 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(28, 26, 23, 0.08);
+  color: var(--muted);
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+.loading-card p { margin: 0; }
+.loading-spinner {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 2px solid var(--line);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 .left-pane {
   flex: 0 0 15.5rem;
   width: 15.5rem;
